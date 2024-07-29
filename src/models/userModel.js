@@ -14,12 +14,6 @@ const userSchema = new Schema(
 			minLength: [3, "Full name must be at least 3 characters"],
 			trim: true,
 		},
-		username: {
-			type: String,
-			required: [true, "Please add your username"],
-			unique: [true, "It looks like this username has already taken!"],
-			trim: true,
-		},
 		email: {
 			type: String,
 			required: [true, "Please add your email address"],
@@ -44,6 +38,10 @@ const userSchema = new Schema(
 		avatar: {
 			type: String,
 		},
+		role: {
+			type: String,
+			default: "User",
+		},
 		password: {
 			type: String,
 			required: [true, "Please add your password"],
@@ -65,7 +63,12 @@ const userSchema = new Schema(
 userSchema.methods.generateAuthToken = async function () {
 	const user = this;
 	const token = jwt.sign(
-		{ id: user._id.toString(), email: user.email, full_name: user.full_name },
+		{
+			id: user._id.toString(),
+			email: user.email,
+			full_name: user.full_name,
+			role: user.role,
+		},
 		process.env.SECRET_KEY
 	);
 

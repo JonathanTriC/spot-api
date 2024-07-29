@@ -1,3 +1,7 @@
+const jwt = require("jsonwebtoken");
+const { v4: uuidv4 } = require("uuid");
+const mongoose = require("mongoose");
+
 const sendResponse = ({ res, status, message, data }) => {
 	const messages = {
 		200: "Success",
@@ -20,4 +24,16 @@ const getPagination = (limit, offset) => {
 	return { page, size };
 };
 
-module.exports = { sendResponse, getPagination };
+const generateGuestToken = () => {
+	return jwt.sign(
+		{
+			id: new mongoose.Types.ObjectId(), // Placeholder id
+			email: "guest@example.com", // Placeholder email
+			full_name: "Guest User", // Placeholder name
+			role: "Guest", // Role set to 'Guest'
+		},
+		process.env.SECRET_KEY
+	);
+};
+
+module.exports = { sendResponse, getPagination, generateGuestToken };

@@ -6,9 +6,10 @@ const URL = require("../helpers/url");
 
 router.get(
 	`${URL.BASE_NAME_USERS}/allUsers`,
-	authMiddleware,
+	// authMiddleware,
 	UserController.getAllUsers
 );
+router.post(`${URL.BASE_NAME_USERS}/guest-login`, UserController.guestLogIn);
 router.post(`${URL.BASE_NAME_USERS}/signup`, UserController.signUp);
 router.post(`${URL.BASE_NAME_USERS}/login`, UserController.logIn);
 router.post(

@@ -2,6 +2,26 @@ const User = require("../models/userModel");
 const Utils = require("../helpers/utils");
 const { request } = require("express");
 
+// MARK: Guest Login
+exports.guestLogIn = async (req, res) => {
+	try {
+		const guestToken = Utils.generateGuestToken();
+
+		Utils.sendResponse({
+			res,
+			status: 200,
+			data: { token: guestToken },
+		});
+	} catch (err) {
+		console.log(err);
+		Utils.sendResponse({
+			res,
+			status: 500,
+			message: "Internal server error while generating guest token.",
+		});
+	}
+};
+
 // MARK: User Sign Up
 exports.signUp = async (req, res) => {
 	const newUser = new User(req.body);
@@ -62,10 +82,13 @@ exports.logIn = async (req, res) => {
 // MARK: User Log Out
 exports.logOut = async (req, res) => {
 	try {
-		req.user.tokens = req.user.tokens.filter((item) => {
-			return item.token !== req.token;
-		});
-		await req.user.save();
+		if (req.user.role === "User") {
+			req.user.tokens = req.user.tokens.filter((item) => {
+				return item.token !== req.token;
+			});
+
+			await req.user.save();
+		}
 
 		Utils.sendResponse({
 			res,
