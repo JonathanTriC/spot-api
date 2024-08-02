@@ -1,16 +1,23 @@
 const User = require("../models/userModel");
 const Utils = require("../helpers/utils");
-const { request } = require("express");
+const mongoose = require("mongoose");
+const cloudinary = require("../config/cloudinary");
 
 // MARK: Guest Login
 exports.guestLogIn = async (req, res) => {
 	try {
-		const guestToken = Utils.generateGuestToken();
+		const guestUser = {
+			id: new mongoose.Types.ObjectId(),
+			email: "guest@example.com",
+			full_name: "Guest User",
+			role: "Guest",
+		};
+		const guestToken = Utils.generateGuestToken(guestUser);
 
 		Utils.sendResponse({
 			res,
 			status: 200,
-			data: { token: guestToken },
+			data: { user: guestUser, token: guestToken },
 		});
 	} catch (err) {
 		console.log(err);
@@ -33,7 +40,7 @@ exports.signUp = async (req, res) => {
 		Utils.sendResponse({
 			res,
 			status: 201,
-			data: { savedUser, token },
+			data: { user: savedUser, token },
 		});
 	} catch (err) {
 		// Error handling for duplicate email address
@@ -41,7 +48,7 @@ exports.signUp = async (req, res) => {
 			return Utils.sendResponse({
 				res,
 				status: 400,
-				message: "It looks like you already have an account. Please sign in.",
+				message: "It looks like you already have an account.\nPlease sign in.",
 			});
 		}
 
@@ -74,7 +81,7 @@ exports.logIn = async (req, res) => {
 		Utils.sendResponse({
 			res,
 			status: 400,
-			message: "Unable to login! Make sure your email and password are valid.",
+			message: "Unable to login!\nMake sure your email and password are valid.",
 		});
 	}
 };
@@ -214,6 +221,65 @@ exports.updateUser = async (req, res) => {
 			res,
 			status: 404,
 			message: "User not found!",
+		});
+	}
+};
+
+// MARK: Upload Avatar
+exports.uploadAvatar = async (req, res) => {
+	try {
+		const user = await User.findById(req.user.id);
+
+		if (!user) {
+			return Utils.sendResponse({
+				res,
+				status: 404,
+				message: "User not found!",
+			});
+		}
+
+		if (!req.file) {
+			return Utils.sendResponse({
+				res,
+				status: 400,
+				message: "Please upload your photo profile",
+			});
+		}
+
+		// Cloudinary upload
+		const uploadResult = await new Promise((resolve, reject) => {
+			const uploadStream = cloudinary.uploader.upload_stream(
+				{ folder: "avatars" },
+				(error, result) => {
+					if (error) return reject(error);
+					resolve(result);
+				}
+			);
+			uploadStream.end(req.file.buffer);
+		});
+
+		// Ensure secure_url is present
+		if (!uploadResult || !uploadResult.secure_url) {
+			throw new Error("Failed to get secure URL from Cloudinary");
+		}
+
+		// Update user's avatar with the URL from Cloudinary
+		user.avatar = uploadResult.secure_url;
+		console.log("result.secure_url:", JSON.stringify(uploadResult));
+		await user.save();
+
+		Utils.sendResponse({
+			res,
+			status: 200,
+			user,
+			message: "Avatar uploaded successfully",
+		});
+	} catch (err) {
+		console.error("ERROR:", JSON.stringify(err));
+		Utils.sendResponse({
+			res,
+			status: 500,
+			message: "Server error",
 		});
 	}
 };

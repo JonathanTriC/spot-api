@@ -2,6 +2,7 @@ const express = require("express");
 const router = new express.Router();
 const UserController = require("../controllers/userController");
 const authMiddleware = require("../middleware/authMiddleware");
+const uploadMiddleware = require("../middleware/uploadMiddleware");
 const URL = require("../helpers/url");
 
 router.get(
@@ -27,6 +28,12 @@ router.patch(
 	`${URL.BASE_NAME_USERS}/update`,
 	authMiddleware,
 	UserController.updateUser
+);
+router.post(
+	`${URL.BASE_NAME_USERS}/upload-avatar`,
+	authMiddleware,
+	uploadMiddleware.single("avatar"),
+	UserController.uploadAvatar
 );
 router.delete(
 	`${URL.BASE_NAME_USERS}/delete`,
