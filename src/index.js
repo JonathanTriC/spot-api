@@ -4,6 +4,7 @@ const express = require("express");
 const multer = require("multer");
 const Utils = require("./helpers/utils");
 const userRouter = require("./routers/userRouter");
+const featureRouter = require("./routers/featureRouter");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -11,6 +12,7 @@ const port = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(userRouter);
+app.use(featureRouter);
 
 app.use((err, req, res, next) => {
 	if (err instanceof multer.MulterError) {
